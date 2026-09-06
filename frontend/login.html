@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Detection - Login</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+    body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f4f6f8;
+    }
+
+    .login-box {
+        width: 380px;
+        background: white;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+
+    h1 {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 30px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 7px;
+        font-weight: bold;
+    }
+
+    input {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 18px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 15px;
+    }
+
+    button {
+        width: 100%;
+        padding: 13px;
+        border: none;
+        border-radius: 6px;
+        background: #111827;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        opacity: 0.9;
+    }
+
+    #message {
+        margin-top: 18px;
+        text-align: center;
+        color: #d00;
+    }
+</style>
+```
+
+</head>
+
+<body>
+
+<div class="login-box">
+
+```
+<h1>Fraud Detection</h1>
+
+<p class="subtitle">
+    Real-Time Transaction Risk Engine
+</p>
+
+<form id="loginForm">
+
+    <label for="username">Username</label>
+
+    <input
+        type="text"
+        id="username"
+        placeholder="Enter username"
+        required
+    >
+
+    <label for="password">Password</label>
+
+    <input
+        type="password"
+        id="password"
+        placeholder="Enter password"
+        required
+    >
+
+    <button type="submit">
+        Login
+    </button>
+
+</form>
+
+<div id="message"></div>
+```
+
+</div>
+
+<script>
+    document
+        .getElementById("loginForm")
+        .addEventListener("submit", async function(event) {
+
+            event.preventDefault();
+
+            const username =
+                document.getElementById("username").value;
+
+            const password =
+                document.getElementById("password").value;
+
+            const message =
+                document.getElementById("message");
+
+            message.textContent = "Logging in...";
+
+            try {
+
+                const response = await fetch("/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.detail || "Login failed"
+                    );
+                }
+
+                localStorage.setItem(
+                    "access_token",
+                    data.access_token
+                );
+
+                localStorage.setItem(
+                    "username",
+                    data.username
+                );
+
+                window.location.href =
+                    "/dashboard-page";
+
+            } catch (error) {
+
+                message.textContent =
+                    error.message;
+
+            }
+
+        });
+</script>
+
+</body>
+</html>

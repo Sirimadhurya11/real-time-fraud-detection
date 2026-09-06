@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+```
+<title>Fraud Detection Dashboard</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+    }
+
+    body {
+        background: #f4f6f8;
+        color: #111827;
+    }
+
+    header {
+        background: #111827;
+        color: white;
+        padding: 20px 35px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    header h1 {
+        font-size: 24px;
+    }
+
+    .logout {
+        background: white;
+        color: #111827;
+        border: none;
+        padding: 9px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 30px auto;
+        padding: 0 20px;
+    }
+
+    .welcome {
+        margin-bottom: 25px;
+    }
+
+    .welcome h2 {
+        margin-bottom: 5px;
+    }
+
+    .welcome p {
+        color: #6b7280;
+    }
+
+    .cards {
+        display: grid;
+        grid-template-columns:
+            repeat(auto-fit, minmax(180px, 1fr));
+        gap: 18px;
+        margin-bottom: 30px;
+    }
+
+    .card {
+        background: white;
+        padding: 22px;
+        border-radius: 10px;
+        box-shadow:
+            0 3px 12px rgba(0,0,0,0.08);
+    }
+
+    .card h3 {
+        color: #6b7280;
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+
+    .card .number {
+        font-size: 30px;
+        font-weight: bold;
+    }
+
+    .section {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow:
+            0 3px 12px rgba(0,0,0,0.08);
+    }
+
+    .section h2 {
+        margin-bottom: 18px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th,
+    td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    th {
+        background: #f9fafb;
+    }
+
+    .risk-high {
+        font-weight: bold;
+    }
+
+    .risk-medium {
+        font-weight: bold;
+    }
+
+    .risk-low {
+        font-weight: bold;
+    }
+
+    .status {
+        font-weight: bold;
+    }
+
+    .error {
+        color: #b91c1c;
+        padding: 15px;
+        background: #fee2e2;
+        border-radius: 6px;
+    }
+
+    .loading {
+        color: #6b7280;
+    }
+
+    @media (max-width: 700px) {
+
+        header {
+            padding: 15px;
+        }
+
+        .container {
+            margin-top: 20px;
+        }
+
+        table {
+            font-size: 13px;
+        }
+
+        th,
+        td {
+            padding: 8px;
+        }
+    }
+</style>
+```
+
+</head>
+
+<body>
+
+<header>
+
+```
+<h1>Fraud Detection Dashboard</h1>
+
+<button
+    class="logout"
+    onclick="logout()">
+    Logout
+</button>
+```
+
+</header>
+
+<div class="container">
+
+```
+<div class="welcome">
+
+    <h2>
+        Welcome, <span id="username">User</span>
+    </h2>
+
+    <p>
+        Real-time transaction monitoring and fraud analysis
+    </p>
+
+</div>
+
+
+<!-- STATISTICS -->
+
+<div class="cards">
+
+    <div class="card">
+        <h3>Total Transactions</h3>
+        <div
+            class="number"
+            id="totalTransactions">
+            -
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Total Fraud Alerts</h3>
+        <div
+            class="number"
+            id="totalAlerts">
+            -
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>High Risk</h3>
+        <div
+            class="number"
+            id="highRisk">
+            -
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Medium Risk</h3>
+        <div
+            class="number"
+            id="mediumRisk">
+            -
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Low Risk</h3>
+        <div
+            class="number"
+            id="lowRisk">
+            -
+        </div>
+    </div>
+
+</div>
+
+
+<!-- TRANSACTIONS -->
+
+<div class="section">
+
+    <h2>Recent Transactions</h2>
+
+    <div id="transactionsContainer">
+        <p class="loading">
+            Loading transactions...
+        </p>
+    </div>
+
+</div>
+
+
+<!-- FRAUD ALERTS -->
+
+<div class="section">
+
+    <h2>Fraud Alerts</h2>
+
+    <div id="alertsContainer">
+        <p class="loading">
+            Loading fraud alerts...
+        </p>
+    </div>
+
+</div>
+```
+
+</div>
+
+<script>
+
+const token =
+    localStorage.getItem("access_token");
+
+const username =
+    localStorage.getItem("username");
+
+
+/*
+    CHECK LOGIN
+*/
+
+if (!token) {
+
+    window.location.href =
+        "/login-page";
+
+}
+
+
+/*
+    DISPLAY USERNAME
+*/
+
+if (username) {
+
+    document.getElementById(
+        "username"
+    ).textContent = username;
+
+}
+
+
+/*
+    API REQUEST HELPER
+*/
+
+async function apiRequest(url) {
+
+    const response = await fetch(
+        url,
+        {
+            headers: {
+                "Authorization":
+                    "Bearer " + token,
+
+                "Accept":
+                    "application/json"
+            }
+        }
+    );
+
+    if (response.status === 401) {
+
+        logout();
+
+        return null;
+    }
+
+    if (!response.ok) {
+
+        throw new Error(
+            "API request failed: " +
+            response.status
+        );
+
+    }
+
+    return response.json();
+
+}
+
+
+/*
+    LOAD DASHBOARD
+*/
+
+async function loadDashboard() {
+
+    try {
+
+        const data =
+            await apiRequest(
+                "/dashboard"
+            );
+
+        if (!data) return;
+
+
+        document.getElementById(
+            "totalTransactions"
+        ).textContent =
+            data.total_transactions ?? 0;
+
+
+        document.getElementById(
+            "totalAlerts"
+        ).textContent =
+            data.total_alerts ?? 0;
+
+
+        document.getElementById(
+            "highRisk"
+        ).textContent =
+            data.high_risk ?? 0;
+
+
+        document.getElementById(
+            "mediumRisk"
+        ).textContent =
+            data.medium_risk ?? 0;
+
+
+        document.getElementById(
+            "lowRisk"
+        ).textContent =
+            data.low_risk ?? 0;
+
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+}
+
+
+/*
+    LOAD TRANSACTIONS
+*/
+
+async function loadTransactions() {
+
+    const container =
+        document.getElementById(
+            "transactionsContainer"
+        );
+
+    try {
+
+        const data =
+            await apiRequest(
+                "/transactions"
+            );
+
+        if (!data) return;
+
+
+        const transactions =
+            data.transactions || data;
+
+
+        if (!transactions.length) {
+
+            container.innerHTML =
+                "<p>No transactions found.</p>";
+
+            return;
+
+        }
+
+
+        let html = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Amount</th>
+                        <th>Currency</th>
+                        <th>Merchant</th>
+                        <th>Location</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+
+        transactions.forEach(
+            transaction => {
+
+                html += `
+                    <tr>
+                        <td>
+                            ${transaction.transaction_id ?? "-"}
+                        </td>
+
+                        <td>
+                            ${transaction.amount ?? "-"}
+                        </td>
+
+                        <td>
+                            ${transaction.currency ?? "-"}
+                        </td>
+
+                        <td>
+                            ${transaction.merchant ?? "-"}
+                        </td>
+
+                        <td>
+                            ${transaction.location ?? "-"}
+                        </td>
+
+                        <td>
+                            ${transaction.transaction_time ?? "-"}
+                        </td>
+                    </tr>
+                `;
+
+            }
+        );
+
+
+        html += `
+                </tbody>
+            </table>
+        `;
+
+        container.innerHTML = html;
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        container.innerHTML =
+            `<div class="error">
+                Unable to load transactions.
+            </div>`;
+
+    }
+
+}
+
+
+/*
+    LOAD FRAUD ALERTS
+*/
+
+async function loadAlerts() {
+
+    const container =
+        document.getElementById(
+            "alertsContainer"
+        );
+
+    try {
+
+        const alerts =
+            await apiRequest(
+                "/fraud-alerts"
+            );
+
+        if (!alerts) return;
+
+
+        if (!alerts.length) {
+
+            container.innerHTML =
+                "<p>No fraud alerts found.</p>";
+
+            return;
+
+        }
+
+
+        let html = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Transaction ID</th>
+                        <th>Risk Score</th>
+                        <th>Risk Level</th>
+                        <th>Reason</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+
+        alerts.forEach(
+            alert => {
+
+                html += `
+                    <tr>
+
+                        <td>
+                            ${alert.transaction_id ?? "-"}
+                        </td>
+
+                        <td>
+                            ${alert.risk_score ?? "-"}
+                        </td>
+
+                        <td class="risk-${String(
+                            alert.risk_level ?? ""
+                        ).toLowerCase()}">
+                            ${alert.risk_level ?? "-"}
+                        </td>
+
+                        <td>
+                            ${alert.reason ?? "-"}
+                        </td>
+
+                        <td>
+                            ${alert.created_at ?? "-"}
+                        </td>
+
+                    </tr>
+                `;
+
+            }
+        );
+
+
+        html += `
+                </tbody>
+            </table>
+        `;
+
+        container.innerHTML = html;
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        container.innerHTML =
+            `<div class="error">
+                Unable to load fraud alerts.
+            </div>`;
+
+    }
+
+}
+
+
+/*
+    LOGOUT
+*/
+
+function logout() {
+
+    localStorage.removeItem(
+        "access_token"
+    );
+
+    localStorage.removeItem(
+        "username"
+    );
+
+    window.location.href =
+        "/login-page";
+
+}
+
+
+/*
+    LOAD EVERYTHING
+*/
+
+loadDashboard();
+
+loadTransactions();
+
+loadAlerts();
+
+</script>
+
+</body>
+</html>
