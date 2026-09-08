@@ -1,54 +1,141 @@
-import bcrypt
+import os
+from datetime import datetime, timedelta
+
+from jose import jwt, JWTError
+from passlib.context import CryptContext
+from fastapi import HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 
 # =========================================================
-# PASSWORD HASHING
+# PASSWORD CONFIGURATION
+# =========================================================
+
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto"
+)
+
+
+# =========================================================
+# JWT CONFIGURATION
+# =========================================================
+
+SECRET_KEY = os.getenv(
+    "SECRET_KEY",
+    "financial-reconciliation-secret-key-change-this"
+)
+
+ALGORITHM = "HS256"
+
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
+
+security = HTTPBearer()
+
+
+# =========================================================
+# PASSWORD HASH
 # =========================================================
 
 def hash_password(password: str) -> str:
     """
     Hash a password using bcrypt.
 
-    bcrypt only accepts passwords up to 72 bytes.
-    We explicitly check this so the application fails
-    cleanly instead of crashing during deployment.
+    bcrypt supports a maximum of 72 bytes.
+    We truncate safely to prevent deployment errors.
     """
 
     password_bytes = password.encode("utf-8")
 
     if len(password_bytes) > 72:
-        raise ValueError(
-            "Password cannot be longer than 72 bytes."
+        password_bytes = password_bytes[:72]
+        password = password_bytes.decode(
+            "utf-8",
+            errors="ignore"
         )
 
-    hashed = bcrypt.hashpw(
-        password_bytes,
-        bcrypt.gensalt()
-    )
-
-    return hashed.decode("utf-8")
+    return pwd_context.hash(password)
 
 
 # =========================================================
-# PASSWORD VERIFICATION
+# VERIFY PASSWORD
 # =========================================================
 
 def verify_password(
-    password: str,
-    password_hash: str
+    plain_password: str,
+    hashed_password: str
 ) -> bool:
 
-    password_bytes = password.encode("utf-8")
+    password_bytes = plain_password.encode("utf-8")
 
     if len(password_bytes) > 72:
-        return False
+        password_bytes = password_bytes[:72]
 
-    try:
-        return bcrypt.checkpw(
-            password_bytes,
-            password_hash.encode("utf-8")
+        plain_password = password_bytes.decode(
+            "utf-8",
+            errors="ignore"
         )
 
-    except (ValueError, TypeError):
-        return False
+    return pwd_context.verify(
+        plain_password,
+        hashed_password
+    )
+
+
+# =========================================================
+# CREATE ACCESS TOKEN
+# =========================================================
+
+def create_access_token(username: str) -> str:
+
+    expire = datetime.utcnow() + timedelta(
+        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+
+    payload = {
+        "sub": username,
+        "exp": expire
+    }
+
+    return jwt.encode(
+        payload,
+        SECRET_KEY,
+        algorithm=ALGORITHM
+    )
+
+
+# =========================================================
+# GET CURRENT USER
+# =========================================================
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials
+) -> str:
+
+    token = credentials.credentials
+
+    try:
+
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+
+        username = payload.get("sub")
+
+        if not username:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid authentication token"
+            )
+
+        return username
+
+    except JWTError:
+
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired authentication token"
+        )
 
