@@ -44,8 +44,12 @@
         font-weight: bold;
     }
 
+    .logout:hover {
+        background: #e5e7eb;
+    }
+
     .container {
-        max-width: 1200px;
+        max-width: 1250px;
         margin: 30px auto;
         padding: 0 20px;
     }
@@ -66,6 +70,7 @@
         display: grid;
         grid-template-columns:
             repeat(auto-fit, minmax(180px, 1fr));
+
         gap: 18px;
         margin-bottom: 30px;
     }
@@ -74,8 +79,9 @@
         background: white;
         padding: 22px;
         border-radius: 10px;
+
         box-shadow:
-            0 3px 12px rgba(0,0,0,0.08);
+            0 3px 12px rgba(0, 0, 0, 0.08);
     }
 
     .card h3 {
@@ -84,8 +90,13 @@
         margin-bottom: 10px;
     }
 
-    .card .number {
+    .number {
         font-size: 30px;
+        font-weight: bold;
+    }
+
+    .amount {
+        font-size: 22px;
         font-weight: bold;
     }
 
@@ -94,17 +105,23 @@
         border-radius: 10px;
         padding: 25px;
         margin-bottom: 25px;
+
         box-shadow:
-            0 3px 12px rgba(0,0,0,0.08);
+            0 3px 12px rgba(0, 0, 0, 0.08);
     }
 
     .section h2 {
         margin-bottom: 18px;
     }
 
+    .table-container {
+        overflow-x: auto;
+    }
+
     table {
         width: 100%;
         border-collapse: collapse;
+        min-width: 900px;
     }
 
     th,
@@ -116,22 +133,69 @@
 
     th {
         background: #f9fafb;
+        font-size: 14px;
+    }
+
+    td {
+        font-size: 14px;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 5px 9px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
     }
 
     .risk-high {
-        font-weight: bold;
+        background: #fee2e2;
+        color: #b91c1c;
     }
 
     .risk-medium {
-        font-weight: bold;
+        background: #fef3c7;
+        color: #92400e;
     }
 
     .risk-low {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .decision-block {
+        color: #b91c1c;
         font-weight: bold;
     }
 
-    .status {
+    .decision-review {
+        color: #92400e;
         font-weight: bold;
+    }
+
+    .decision-approve {
+        color: #166534;
+        font-weight: bold;
+    }
+
+    .fraud {
+        color: #b91c1c;
+        font-weight: bold;
+    }
+
+    .not-fraud {
+        color: #166534;
+        font-weight: bold;
+    }
+
+    .loading {
+        color: #6b7280;
+        padding: 10px 0;
+    }
+
+    .empty {
+        color: #6b7280;
+        padding: 10px 0;
     }
 
     .error {
@@ -141,27 +205,22 @@
         border-radius: 6px;
     }
 
-    .loading {
-        color: #6b7280;
-    }
-
     @media (max-width: 700px) {
 
         header {
             padding: 15px;
         }
 
+        header h1 {
+            font-size: 18px;
+        }
+
         .container {
             margin-top: 20px;
         }
 
-        table {
-            font-size: 13px;
-        }
-
-        th,
-        td {
-            padding: 8px;
+        .section {
+            padding: 15px;
         }
     }
 </style>
@@ -201,12 +260,13 @@
 </div>
 
 
-<!-- STATISTICS -->
+<!-- ================= STATISTICS ================= -->
 
 <div class="cards">
 
     <div class="card">
         <h3>Total Transactions</h3>
+
         <div
             class="number"
             id="totalTransactions">
@@ -214,8 +274,10 @@
         </div>
     </div>
 
+
     <div class="card">
         <h3>Total Fraud Alerts</h3>
+
         <div
             class="number"
             id="totalAlerts">
@@ -223,8 +285,10 @@
         </div>
     </div>
 
+
     <div class="card">
         <h3>High Risk</h3>
+
         <div
             class="number"
             id="highRisk">
@@ -232,8 +296,10 @@
         </div>
     </div>
 
+
     <div class="card">
         <h3>Medium Risk</h3>
+
         <div
             class="number"
             id="mediumRisk">
@@ -241,8 +307,10 @@
         </div>
     </div>
 
+
     <div class="card">
         <h3>Low Risk</h3>
+
         <div
             class="number"
             id="lowRisk">
@@ -250,34 +318,49 @@
         </div>
     </div>
 
+
+    <div class="card">
+        <h3>Total Amount</h3>
+
+        <div
+            class="amount"
+            id="totalAmount">
+            -
+        </div>
+    </div>
+
 </div>
 
 
-<!-- TRANSACTIONS -->
+<!-- ================= TRANSACTIONS ================= -->
 
 <div class="section">
 
     <h2>Recent Transactions</h2>
 
     <div id="transactionsContainer">
+
         <p class="loading">
             Loading transactions...
         </p>
+
     </div>
 
 </div>
 
 
-<!-- FRAUD ALERTS -->
+<!-- ================= FRAUD ALERTS ================= -->
 
 <div class="section">
 
     <h2>Fraud Alerts</h2>
 
     <div id="alertsContainer">
+
         <p class="loading">
             Loading fraud alerts...
         </p>
+
     </div>
 
 </div>
@@ -295,7 +378,9 @@ const username =
 
 
 /*
-    CHECK LOGIN
+=========================================================
+CHECK LOGIN
+=========================================================
 */
 
 if (!token) {
@@ -307,7 +392,9 @@ if (!token) {
 
 
 /*
-    DISPLAY USERNAME
+=========================================================
+DISPLAY USERNAME
+=========================================================
 */
 
 if (username) {
@@ -320,7 +407,9 @@ if (username) {
 
 
 /*
-    API REQUEST HELPER
+=========================================================
+API REQUEST
+=========================================================
 */
 
 async function apiRequest(url) {
@@ -328,6 +417,8 @@ async function apiRequest(url) {
     const response = await fetch(
         url,
         {
+            method: "GET",
+
             headers: {
                 "Authorization":
                     "Bearer " + token,
@@ -338,14 +429,34 @@ async function apiRequest(url) {
         }
     );
 
+
     if (response.status === 401) {
 
-        logout();
+        localStorage.removeItem(
+            "access_token"
+        );
+
+        localStorage.removeItem(
+            "username"
+        );
+
+        window.location.href =
+            "/login-page";
 
         return null;
     }
 
+
     if (!response.ok) {
+
+        const errorText =
+            await response.text();
+
+        console.error(
+            "API error:",
+            response.status,
+            errorText
+        );
 
         throw new Error(
             "API request failed: " +
@@ -354,13 +465,16 @@ async function apiRequest(url) {
 
     }
 
+
     return response.json();
 
 }
 
 
 /*
-    LOAD DASHBOARD
+=========================================================
+LOAD DASHBOARD STATISTICS
+=========================================================
 */
 
 async function loadDashboard() {
@@ -372,7 +486,10 @@ async function loadDashboard() {
                 "/dashboard"
             );
 
-        if (!data) return;
+
+        if (!data) {
+            return;
+        }
 
 
         document.getElementById(
@@ -405,9 +522,18 @@ async function loadDashboard() {
             data.low_risk ?? 0;
 
 
+        document.getElementById(
+            "totalAmount"
+        ).textContent =
+            data.total_amount ?? 0;
+
+
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Dashboard error:",
+            error
+        );
 
     }
 
@@ -415,7 +541,9 @@ async function loadDashboard() {
 
 
 /*
-    LOAD TRANSACTIONS
+=========================================================
+LOAD TRANSACTIONS
+=========================================================
 */
 
 async function loadTransactions() {
@@ -425,24 +553,39 @@ async function loadTransactions() {
             "transactionsContainer"
         );
 
+
     try {
 
         const data =
             await apiRequest(
-                "/transactions"
+                "/transactions?limit=50"
             );
 
-        if (!data) return;
 
+        if (!data) {
+            return;
+        }
+
+
+        /*
+            /transactions returns
+            a direct JSON array.
+        */
 
         const transactions =
-            data.transactions || data;
+            Array.isArray(data)
+                ? data
+                : data.transactions || [];
 
 
-        if (!transactions.length) {
+        if (
+            transactions.length === 0
+        ) {
 
             container.innerHTML =
-                "<p>No transactions found.</p>";
+                '<p class="empty">' +
+                'No transactions found.' +
+                '</p>';
 
             return;
 
@@ -450,26 +593,65 @@ async function loadTransactions() {
 
 
         let html = `
+
+            <div class="table-container">
+
             <table>
+
                 <thead>
+
                     <tr>
+
                         <th>ID</th>
+
                         <th>Amount</th>
+
                         <th>Currency</th>
+
                         <th>Merchant</th>
+
                         <th>Location</th>
+
+                        <th>Risk</th>
+
+                        <th>Decision</th>
+
+                        <th>Fraud</th>
+
                         <th>Time</th>
+
                     </tr>
+
                 </thead>
+
                 <tbody>
+
         `;
 
 
         transactions.forEach(
             transaction => {
 
+                const risk =
+                    String(
+                        transaction.risk_level ?? ""
+                    ).toLowerCase();
+
+
+                const decision =
+                    String(
+                        transaction.decision ?? ""
+                    ).toLowerCase();
+
+
+                const fraud =
+                    transaction.is_fraud;
+
+
                 html += `
+
                     <tr>
+
                         <td>
                             ${transaction.transaction_id ?? "-"}
                         </td>
@@ -491,9 +673,40 @@ async function loadTransactions() {
                         </td>
 
                         <td>
+
+                            <span
+                                class="badge risk-${risk}">
+                                ${transaction.risk_level ?? "-"}
+                            </span>
+
+                        </td>
+
+                        <td
+                            class="decision-${decision}">
+                            ${transaction.decision ?? "-"}
+                        </td>
+
+                        <td
+                            class="${
+                                fraud
+                                    ? "fraud"
+                                    : "not-fraud"
+                            }">
+
+                            ${
+                                fraud
+                                    ? "YES"
+                                    : "NO"
+                            }
+
+                        </td>
+
+                        <td>
                             ${transaction.transaction_time ?? "-"}
                         </td>
+
                     </tr>
+
                 `;
 
             }
@@ -501,21 +714,42 @@ async function loadTransactions() {
 
 
         html += `
+
                 </tbody>
+
             </table>
+
+            </div>
+
         `;
 
-        container.innerHTML = html;
+
+        container.innerHTML =
+            html;
 
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Transaction error:",
+            error
+        );
 
-        container.innerHTML =
-            `<div class="error">
+
+        container.innerHTML = `
+
+            <div class="error">
+
                 Unable to load transactions.
-            </div>`;
+
+                <br>
+
+                Please login again if the
+                problem continues.
+
+            </div>
+
+        `;
 
     }
 
@@ -523,7 +757,9 @@ async function loadTransactions() {
 
 
 /*
-    LOAD FRAUD ALERTS
+=========================================================
+LOAD FRAUD ALERTS
+=========================================================
 */
 
 async function loadAlerts() {
@@ -533,6 +769,7 @@ async function loadAlerts() {
             "alertsContainer"
         );
 
+
     try {
 
         const alerts =
@@ -540,13 +777,20 @@ async function loadAlerts() {
                 "/fraud-alerts"
             );
 
-        if (!alerts) return;
+
+        if (!alerts) {
+            return;
+        }
 
 
-        if (!alerts.length) {
+        if (
+            alerts.length === 0
+        ) {
 
             container.innerHTML =
-                "<p>No fraud alerts found.</p>";
+                '<p class="empty">' +
+                'No fraud alerts found.' +
+                '</p>';
 
             return;
 
@@ -554,24 +798,45 @@ async function loadAlerts() {
 
 
         let html = `
+
+            <div class="table-container">
+
             <table>
+
                 <thead>
+
                     <tr>
+
                         <th>Transaction ID</th>
+
                         <th>Risk Score</th>
+
                         <th>Risk Level</th>
+
                         <th>Reason</th>
+
                         <th>Created</th>
+
                     </tr>
+
                 </thead>
+
                 <tbody>
+
         `;
 
 
         alerts.forEach(
             alert => {
 
+                const risk =
+                    String(
+                        alert.risk_level ?? ""
+                    ).toLowerCase();
+
+
                 html += `
+
                     <tr>
 
                         <td>
@@ -582,10 +847,15 @@ async function loadAlerts() {
                             ${alert.risk_score ?? "-"}
                         </td>
 
-                        <td class="risk-${String(
-                            alert.risk_level ?? ""
-                        ).toLowerCase()}">
-                            ${alert.risk_level ?? "-"}
+                        <td>
+
+                            <span
+                                class="badge risk-${risk}">
+
+                                ${alert.risk_level ?? "-"}
+
+                            </span>
+
                         </td>
 
                         <td>
@@ -597,6 +867,7 @@ async function loadAlerts() {
                         </td>
 
                     </tr>
+
                 `;
 
             }
@@ -604,21 +875,37 @@ async function loadAlerts() {
 
 
         html += `
+
                 </tbody>
+
             </table>
+
+            </div>
+
         `;
 
-        container.innerHTML = html;
+
+        container.innerHTML =
+            html;
 
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Fraud alert error:",
+            error
+        );
 
-        container.innerHTML =
-            `<div class="error">
+
+        container.innerHTML = `
+
+            <div class="error">
+
                 Unable to load fraud alerts.
-            </div>`;
+
+            </div>
+
+        `;
 
     }
 
@@ -626,7 +913,9 @@ async function loadAlerts() {
 
 
 /*
-    LOGOUT
+=========================================================
+LOGOUT
+=========================================================
 */
 
 function logout() {
@@ -639,6 +928,7 @@ function logout() {
         "username"
     );
 
+
     window.location.href =
         "/login-page";
 
@@ -646,7 +936,9 @@ function logout() {
 
 
 /*
-    LOAD EVERYTHING
+=========================================================
+LOAD EVERYTHING
+=========================================================
 */
 
 loadDashboard();

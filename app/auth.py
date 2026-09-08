@@ -3,8 +3,12 @@ from datetime import datetime, timedelta
 
 import bcrypt
 from jose import jwt, JWTError
-from fastapi import HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+from fastapi import Depends, HTTPException
+from fastapi.security import (
+    HTTPBearer,
+    HTTPAuthorizationCredentials
+)
 
 
 # =========================================================
@@ -20,7 +24,14 @@ ALGORITHM = "HS256"
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-security = HTTPBearer()
+
+# =========================================================
+# HTTP BEARER AUTHENTICATION
+# =========================================================
+
+security = HTTPBearer(
+    auto_error=True
+)
 
 
 # =========================================================
@@ -32,7 +43,7 @@ def hash_password(password: str) -> str:
     Hash a password using bcrypt.
 
     bcrypt supports a maximum of 72 bytes.
-    Passwords longer than 72 bytes are safely truncated.
+    Passwords longer than 72 bytes are truncated.
     """
 
     password_bytes = password.encode("utf-8")
@@ -87,10 +98,18 @@ def verify_password(
 # CREATE ACCESS TOKEN
 # =========================================================
 
-def create_access_token(username: str) -> str:
+def create_access_token(
+    username: str
+) -> str:
+    """
+    Create a JWT access token for the logged-in user.
+    """
 
-    expire = datetime.utcnow() + timedelta(
-        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+    expire = (
+        datetime.utcnow()
+        + timedelta(
+            minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+        )
     )
 
     payload = {
@@ -98,11 +117,13 @@ def create_access_token(username: str) -> str:
         "exp": expire
     }
 
-    return jwt.encode(
+    token = jwt.encode(
         payload,
         SECRET_KEY,
         algorithm=ALGORITHM
     )
+
+    return token
 
 
 # =========================================================
@@ -110,10 +131,33 @@ def create_access_token(username: str) -> str:
 # =========================================================
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials
+    credentials: HTTPAuthorizationCredentials = Depends(
+        security
+    )
 ) -> str:
+    """
+    Extract and validate the JWT token from:
+
+    Authorization: Bearer <token>
+
+    Returns the username stored in the token.
+    """
+
+    if not credentials:
+
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required"
+        )
 
     token = credentials.credentials
+
+    if not token:
+
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication token missing"
+        )
 
     try:
 
@@ -140,3 +184,15 @@ def get_current_user(
             status_code=401,
             detail="Invalid or expired authentication token"
         )
+
+    except Exception as e:
+
+        print(
+            f"Authentication error: {e}"
+        )
+
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication failed"
+        )
+
