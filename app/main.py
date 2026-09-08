@@ -4,6 +4,7 @@ import os
 
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import FileResponse
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database import Base, engine, get_db
@@ -37,7 +38,7 @@ Base.metadata.create_all(bind=engine)
 
 
 # =========================================================
-# CREATE DEFAULT ADMIN
+# CREATE / RESET DEFAULT ADMIN
 # =========================================================
 
 def create_default_admin():
@@ -46,7 +47,7 @@ def create_default_admin():
 
     try:
 
-        existing_user = (
+        admin = (
             db.query(User)
             .filter(
                 User.username == "admin"
@@ -54,28 +55,37 @@ def create_default_admin():
             .first()
         )
 
-        if not existing_user:
+        password_hash = hash_password("admin123")
+
+        if not admin:
 
             admin = User(
                 username="admin",
-                password_hash=hash_password("admin123")
+                password_hash=password_hash
             )
 
             db.add(admin)
-            db.commit()
 
-            print("Default admin user created.")
+            print(
+                "Default admin user created."
+            )
 
         else:
 
-            print("Default admin user already exists.")
+            admin.password_hash = password_hash
+
+            print(
+                "Default admin password reset."
+            )
+
+        db.commit()
 
     except Exception as e:
 
         db.rollback()
 
         print(
-            f"Could not create default admin user: {e}"
+            f"Could not create/reset default admin: {e}"
         )
 
     finally:
@@ -149,10 +159,18 @@ def login(
             detail="Invalid username or password"
         )
 
-    if not verify_password(
-        login_data.password,
-        user.password_hash
-    ):
+    try:
+
+        password_valid = verify_password(
+            login_data.password,
+            user.password_hash
+        )
+
+    except Exception:
+
+        password_valid = False
+
+    if not password_valid:
 
         raise HTTPException(
             status_code=401,
@@ -164,11 +182,21 @@ def login(
     )
 
     return {
-        "message": "Login successful",
-        "username": user.username,
-        "authenticated": True,
-        "access_token": access_token,
-        "token_type": "bearer"
+
+        "message":
+            "Login successful",
+
+        "username":
+            user.username,
+
+        "authenticated":
+            True,
+
+        "access_token":
+            access_token,
+
+        "token_type":
+            "bearer"
     }
 
 
@@ -202,11 +230,47 @@ def dashboard_page():
 # =========================================================
 
 @app.get("/health")
-def health():
+def health(
+    db: Session = Depends(get_db)
+):
+
+    try:
+
+        db.execute(
+            text("SELECT 1")
+        )
+
+        return {
+            "status": "healthy",
+            "database": "connected"
+        }
+
+    except Exception as e:
+
+        print(
+            f"Database health check failed: {e}"
+        )
+
+        raise HTTPException(
+            status_code=503,
+            detail="Database connection failed"
+        )
+
+
+# =========================================================
+# STATUS
+# =========================================================
+
+@app.get("/status")
+def status():
 
     return {
-        "status": "healthy",
-        "database": "connected"
+
+        "application":
+            "Real-Time Fraud Detection & Risk Engine",
+
+        "status":
+            "running"
     }
 
 
@@ -260,8 +324,7 @@ def create_transaction(
         db.query(Transaction)
         .filter(
             Transaction.user_id == user.id,
-            Transaction.transaction_time
-            >= one_hour_ago
+            Transaction.transaction_time >= one_hour_ago
         )
         .count()
     )
@@ -313,20 +376,15 @@ def create_transaction(
 
         location=transaction.location,
 
-        transaction_time=
-            transaction.transaction_time,
+        transaction_time=transaction.transaction_time,
 
-        risk_score=
-            fraud_result["risk_score"],
+        risk_score=fraud_result["risk_score"],
 
-        risk_level=
-            fraud_result["risk_level"],
+        risk_level=fraud_result["risk_level"],
 
-        decision=
-            fraud_result["decision"],
+        decision=fraud_result["decision"],
 
-        is_fraud=
-            fraud_result["is_fraud"]
+        is_fraud=fraud_result["is_fraud"]
     )
 
     db.add(new_transaction)
@@ -345,16 +403,16 @@ def create_transaction(
 
             transaction_id=transaction_id,
 
-            risk_score=
-                fraud_result["risk_score"],
+            risk_score=fraud_result["risk_score"],
 
-            risk_level=
-                fraud_result["risk_level"],
+            risk_level=fraud_result["risk_level"],
 
-            reason=
-                "; ".join(
-                    fraud_result["reasons"]
+            reason="; ".join(
+                fraud_result.get(
+                    "reasons",
+                    []
                 )
+            )
         )
 
         db.add(alert)
@@ -364,9 +422,22 @@ def create_transaction(
     # SAVE
     # -----------------------------------------------------
 
-    db.commit()
+    try:
 
-    db.refresh(new_transaction)
+        db.commit()
+
+        db.refresh(
+            new_transaction
+        )
+
+    except Exception as e:
+
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not save transaction: {str(e)}"
+        )
 
 
     # -----------------------------------------------------
@@ -394,7 +465,10 @@ def create_transaction(
             fraud_result["is_fraud"],
 
         "reasons":
-            fraud_result["reasons"]
+            fraud_result.get(
+                "reasons",
+                []
+            )
     }
 
 

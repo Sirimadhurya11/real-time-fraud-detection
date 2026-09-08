@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from sqlalchemy import (
     Column,
     Integer,
@@ -8,6 +6,7 @@ from sqlalchemy import (
     DateTime,
     Boolean
 )
+
 from sqlalchemy.sql import func
 
 from app.database import Base
@@ -79,7 +78,7 @@ class Transaction(Base):
     )
 
     currency = Column(
-        String(3),
+        String(10),
         nullable=False
     )
 
@@ -169,3 +168,4 @@ class FraudAlert(Base):
         server_default=func.now(),
         nullable=False
     )
+
