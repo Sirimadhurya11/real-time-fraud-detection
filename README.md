@@ -1,6 +1,10 @@
 ## Live Demo
 
-[🚀 View Live Fraud Detection Dashboard](https://real-time-fraud-detection-pisn.onrender.com)
+ https://real-time-fraud-detection-pisn.onrender.com/login-page
+
+ demo:
+ Username : 'admin',
+ password : 'admin123'
 
 
 # Real-Time Fraud Detection System
